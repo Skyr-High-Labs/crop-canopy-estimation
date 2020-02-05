@@ -102,9 +102,18 @@ def arrayToNDVI(array, startDate, EndDate):
     # map over the image collection
     myCollection  = collection.map(getNDVI)
 
-    # get first image
-    l = myCollection.toList(20)
-    plt.imshow(exportImage(ee.Image(l.get(0)), area))
+    # get all images
+    l = myCollection.toList(collection.size().getInfo())
+    arr = []
+    for i in range(l.size().getInfo()):
+        try:
+            arr.append(exportImage(ee.Image(l.get(i)), area))
+        except:
+            pass
+    return arr
 
-
-    plt.show()
+def plotNDVI(images):
+    for im in images:
+        print(im)
+        plt.imshow(im)
+        plt.show()
