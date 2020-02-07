@@ -4,32 +4,32 @@ import matplotlib.pyplot as plt
 import cv2
 import rasteriser
 import disp_multiple_images
-import common 
-
-# perform any calculation on the image collection here
-def getNDVI(img):
-    ndvi = ee.Image(img.normalizedDifference(['B8', 'B4'])).rename(["ndvi"])
-    return ndvi
+import common
  
-def arrayToNDVI(array, startDate, EndDate):
+# perform any calculation on the image collection here
+def getSAR(img):
+    sar = ee.Image(img.select(['VH'])).rename(["sar"])
+    return sar
+ 
+def arrayToSAR(array, startDate, EndDate):
     ee.Initialize()
     
     # Define the roi
     area = ee.Geometry.Polygon(array)
     
     # query
-    collection = ee.ImageCollection("COPERNICUS/S2").filterBounds(area)\
+    collection = ee.ImageCollection('COPERNICUS/S1_GRD').filterBounds(area)\
                                         .filterDate(startDate, EndDate)\
-                                        .filterMetadata("CLOUDY_PIXEL_PERCENTAGE","less_than",10)\
-                                        .select(['B8', 'B4'])
+                                        .select(['VH', 'VV'])
     
     print("Number of images: ",collection.size().getInfo())
 
     # map over the image collection
-    myCollection  = collection.map(getNDVI)
+    myCollection  = collection.map(getSAR)
 
     # get all images
-    l = myCollection.toList(collection.size().getInfo())
+    l = myCollection.toList(min(40,collection.size().getInfo()))
+
     arr = []
     for i in range(l.size().getInfo()):
         try:
@@ -37,4 +37,3 @@ def arrayToNDVI(array, startDate, EndDate):
         except ee.ee_exception.EEException:
             pass
     return rasteriser.rasteriseImages(arr)
-
