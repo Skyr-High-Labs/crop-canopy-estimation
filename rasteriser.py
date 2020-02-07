@@ -43,6 +43,7 @@ def getRasteriserFunction(lat, lon):
         return tuple(np.int_(np.floor(((lat - minLat)/scale, (lon - minLon)/scale))))
 
     def rasteriseImage(lat, lon, data):
+        lat, lon = rotateByDeg(lat, lon, latm, lonm)
         image = np.zeros(imageSize)
         imageSampled = np.zeros(imageSize)
 
@@ -63,18 +64,19 @@ def getRasteriserFunction(lat, lon):
 
     return rasteriseImage
 
-def rasteriseImages(lat, lon, data, label):
+def rasteriseImages(data):
     rasteriser = getRasteriserFunction(
-        [i for series in lat for i in series], 
-        [i for series in lon for i in series])
-    rasterised = [rasteriser(lat[i],lon[i],data[i]) for i in range(len(data))]
+        [i for capture in data for i in capture[0]], 
+        [i for capture in data for i in capture[1]])
+    rasterised = [rasteriser(*capture[0:3]) for capture in data]
     roiMask = np.median(np.array([image[1] for image in rasterised]),0)
 
-    kernel = np.ones((3,3), np.uint8)
-    roiMask = cv2.erode(roiMask, kernel)
+    roiMask = np.pad(roiMask,1,'constant')
+    kernel = np.ones((5,5), np.uint8)
+    roiMask = cv2.erode(roiMask, kernel)[1:-1,1:-1]
     images = []
     for i in range(len(rasterised)):
         if not np.any(roiMask * np.logical_not(rasterised[i][1])):
             # image covers roi
-            images.append((roiMask * rasterised[i][0], label[i]))
+            images.append((roiMask * rasterised[i][0], data[i][3]))
     return images, roiMask

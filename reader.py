@@ -10,4 +10,4 @@ def parseKML(inputfile):
 
 if __name__ == "__main__":
   for array in parseKML("2017_polygons.kml"):
-    getNDVI.plotNDVI(getNDVI.arrayToNDVI(array, "2017-01-01","2018-01-01"))
+    getNDVI.plotNDVI(*getNDVI.arrayToNDVI(array, "2017-01-01","2018-01-01"))
