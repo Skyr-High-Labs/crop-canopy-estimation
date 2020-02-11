@@ -61,25 +61,29 @@ def arrayToPairs(array, startDate, EndDate, take_first=True, delta=1):
     #print("SAR dates: ")
     #print([x[1].strftime("%b %d %Y") for x in l_SAR_dates])
     
+    # NDVI-[SAR] list
     pairs_i = {}
     for i_SAR in l_SAR_dates:
         for i_NDVI in l_NDVI_dates:
             if abs((i_SAR[1] - i_NDVI[1]).days) <= delta:
-                if take_first and not (i_SAR[0] in pairs_i):
-                    pairs_i[i_SAR[0]] = i_NDVI[0]
-                elif not take_first:
-                    pairs_i[i_SAR[0]] = i_NDVI[0]
+                if not (i_NDVI[0] in pairs_i):
+                    pairs_i[i_NDVI[0]] = [i_SAR[0]]
+                else:
+                    pairs_i[i_NDVI[0]].append(i_SAR[0])
+                #if take_first and not (i_SAR[0] in pairs_i):
+                #    pairs_i[i_SAR[0]] = i_NDVI[0]
+                #elif not take_first:
+                #    pairs_i[i_SAR[0]] = i_NDVI[0]
     
     print(pairs_i)
     arr = []
-    for key, value in pairs_i.items():
-        try:
-            ndvi_temp = common.LatLonImg(ee.Image(l_NDVI.get(key)), area)
-            sar_temp = common.LatLonImg(ee.Image(l_SAR.get(value)), area)
-            if (ndvi_temp != None) and (sar_temp != None):
-                arr.append(ndvi_temp+(2*key,))
-                arr.append(sar_temp+(2*key+1,))
-                print("pair")
-        except ee.ee_exception.EEException:
-            pass
+    for key, value_list in pairs_i.items():
+        for value in value_list:
+            try:
+                ndvi_temp = common.LatLonImg(ee.Image(l_NDVI.get(key)), area)
+                sar_temp = common.LatLonImg(ee.Image(l_SAR.get(value)), area)
+                arr.append(ndvi_temp+(f'NDVI {l_NDVI_dates[key][1]:%B %d, %Y}',))
+                arr.append(sar_temp+(f'SAR {l_SAR_dates[value][1]:%B %d, %Y}',))
+            except ee.ee_exception.EEException:
+                pass
     return rasteriser.rasteriseImages(arr)

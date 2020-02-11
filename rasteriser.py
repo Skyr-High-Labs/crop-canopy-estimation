@@ -76,7 +76,8 @@ def rasteriseImages(data):
     roiMask = cv2.erode(roiMask, kernel)[1:-1,1:-1]
     images = []
     for i in range(len(rasterised)):
-        if not np.any(roiMask * np.logical_not(rasterised[i][1])):
+        # remove check as any pixels
+        #if not np.any(roiMask * np.logical_not(rasterised[i][1])):
             # image covers roi
-            images.append((roiMask * rasterised[i][0], data[i][3]))
+        images.append((roiMask * rasterised[i][0], data[i][3]))
     return images, roiMask

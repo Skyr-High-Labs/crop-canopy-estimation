@@ -22,7 +22,7 @@ def show_images(images, cols = 1, titles = None):
         a = fig.add_subplot(cols, np.ceil(n_images/float(cols)), n + 1)
         #if image.ndim == 2:
         #    plt.gray()
-        plt.imshow(image)
+        a.imshow(image)
         a.set_title(title)
     fig.set_size_inches(np.array(fig.get_size_inches()) * n_images)
     plt.show()
