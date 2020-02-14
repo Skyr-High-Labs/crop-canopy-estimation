@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import ee
 
@@ -30,7 +30,8 @@ def arrayToPairs(array, startDate, EndDate, take_first=True, delta=1):
     collection_NDVI = ee.ImageCollection("COPERNICUS/S2").filterBounds(area) \
         .filterDate(startDate, EndDate) \
         .filterMetadata("CLOUDY_PIXEL_PERCENTAGE", "less_than", 10) \
-        .select(['B8', 'B4'])
+        .select(['B8', 'B4']) \
+        .sort('date')
 
     l_NDVI = collection_NDVI.toList(collection_NDVI.size().getInfo())
     l_NDVI_dates = makeNumDateTuple(l_NDVI)
@@ -39,10 +40,10 @@ def arrayToPairs(array, startDate, EndDate, take_first=True, delta=1):
     valid_dates = None
     for i_NDVI in l_NDVI_dates:
         if not valid_dates:
-            valid_dates = ee.Filter.date(i_NDVI[1].advance(-delta - 1, 'day'), i_NDVI[1].advance(delta + 1, 'day'))
+            valid_dates = ee.Filter.date(i_NDVI[1].advance(-delta, 'day'), i_NDVI[1].advance(delta, 'day'))
         else:
-            valid_dates = ee.Filter.Or(valid_dates, ee.Filter.date(i_NDVI[1].advance(-delta - 1, 'day'),
-                                                                   i_NDVI[1].advance(delta + 1, 'day')))
+            valid_dates = ee.Filter.Or(valid_dates, ee.Filter.date(i_NDVI[1].advance(-delta, 'day'),
+                                                                   i_NDVI[1].advance(delta, 'day')))
 
     collection_SAR = ee.ImageCollection('COPERNICUS/S1_GRD').filterBounds(area) \
         .filter(valid_dates) \
@@ -70,7 +71,7 @@ def arrayToPairs(array, startDate, EndDate, take_first=True, delta=1):
     pairs_i = {}
     for i_SAR in l_SAR_dates:
         for i_NDVI in l_NDVI_dates:
-            if abs((i_SAR[1] - i_NDVI[1]).days) <= delta:
+            if abs((i_SAR[1] - i_NDVI[1])) <= timedelta(days=delta):
                 if not (i_NDVI[0] in pairs_i):
                     pairs_i[i_NDVI[0]] = [i_SAR[0]]
                 else:
@@ -83,8 +84,8 @@ def arrayToPairs(array, startDate, EndDate, take_first=True, delta=1):
     print(pairs_i)
     arr = []
     precomputed_SAR = dict()
-    for NDVI, value_list in pairs_i.items():
-        for SAR in value_list:
+    for NDVI in sorted(pairs_i):
+        for SAR in pairs_i[NDVI]:
             try:
                 ndvi_temp = common.LatLonImg(ee.Image(l_NDVI.get(NDVI)), area)
                 if SAR not in precomputed_SAR:

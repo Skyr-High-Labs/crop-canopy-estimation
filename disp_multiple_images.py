@@ -9,7 +9,7 @@ def show_images(images, cols=8, titles=None):
     ---------
     images: List of np.arrays compatible with plt.imshow.
     
-    cols (Default = 1): Number of columns in figure (number of rows is 
+    cols (Default = 8): Number of columns in figure (number of rows is
                         set to np.ceil(n_images/float(cols))).
     
     titles: List of titles corresponding to each image. Must have
