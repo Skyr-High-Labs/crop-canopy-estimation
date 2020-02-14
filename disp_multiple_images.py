@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def show_images(images, cols = 1, titles = None):
+
+def show_images(images, cols=8, titles=None):
     """Display a list of images in a single figure with matplotlib.
     
     Parameters
@@ -14,13 +15,13 @@ def show_images(images, cols = 1, titles = None):
     titles: List of titles corresponding to each image. Must have
             the same length as titles.
     """
-    assert((titles is None)or (len(images) == len(titles)))
+    assert ((titles is None) or (len(images) == len(titles)))
     n_images = len(images)
-    if titles is None: titles = ['Image (%d)' % i for i in range(1,n_images + 1)]
+    if titles is None: titles = ['Image (%d)' % i for i in range(1, n_images + 1)]
     fig = plt.figure()
     for n, (image, title) in enumerate(zip(images, titles)):
-        a = fig.add_subplot(cols, np.ceil(n_images/float(cols)), n + 1)
-        #if image.ndim == 2:
+        a = fig.add_subplot(np.ceil(n_images / float(cols)), cols, n + 1)
+        # if image.ndim == 2:
         #    plt.gray()
         a.imshow(image)
         a.set_title(title)
