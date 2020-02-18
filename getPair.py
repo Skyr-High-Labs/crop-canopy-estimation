@@ -1,12 +1,24 @@
 from datetime import datetime, timedelta
 
 import ee
-
+import numpy as np
 import common
 import getNDVI
-import getSAR
 import rasteriser
 
+def LatLonImgVHVV(img, area):
+    img = img.addBands(ee.Image.pixelLonLat())
+
+    img = img.reduceRegion(reducer=ee.Reducer.toList(), \
+                           geometry=area, \
+                           maxPixels=1e13, \
+                           scale=10)
+
+    vh = np.array((ee.Array(img.get("VH")).getInfo()))
+    vv = np.array((ee.Array(img.get("VV")).getInfo()))
+    lats = np.array((ee.Array(img.get("latitude")).getInfo()))
+    lons = np.array((ee.Array(img.get("longitude")).getInfo()))
+    return lats, lons, (vh, vv)
 
 def makeNumDateTuple(orig_list):
     new_list = []
@@ -59,13 +71,6 @@ def arrayToPairs(array, startDate, EndDate, take_first=True, delta=1):
     # map collections to their respective special data formats
     collection_NDVI = collection_NDVI.map(getNDVI.getNDVI)
     l_NDVI = collection_NDVI.toList(collection_NDVI.size().getInfo())
-    collection_SAR = collection_SAR.map(getSAR.getSAR)
-    l_SAR = collection_SAR.toList(collection_SAR.size().getInfo())
-
-    # print("NDVI dates: ")
-    # print([x[1].strftime("%b %d %Y") for x in l_NDVI_dates])
-    # print("SAR dates: ")
-    # print([x[1].strftime("%b %d %Y") for x in l_SAR_dates])
 
     # NDVI-[SAR] list
     pairs_i = {}
@@ -76,10 +81,6 @@ def arrayToPairs(array, startDate, EndDate, take_first=True, delta=1):
                     pairs_i[i_NDVI[0]] = [i_SAR[0]]
                 else:
                     pairs_i[i_NDVI[0]].append(i_SAR[0])
-                # if take_first and not (i_SAR[0] in pairs_i):
-                #    pairs_i[i_SAR[0]] = i_NDVI[0]
-                # elif not take_first:
-                #    pairs_i[i_SAR[0]] = i_NDVI[0]
 
     print(pairs_i)
     arr = []
@@ -89,10 +90,12 @@ def arrayToPairs(array, startDate, EndDate, take_first=True, delta=1):
             try:
                 ndvi_temp = common.LatLonImg(ee.Image(l_NDVI.get(NDVI)), area)
                 if SAR not in precomputed_SAR:
-                    sar_temp = common.LatLonImg(ee.Image(l_SAR.get(SAR)), area)
-                    precomputed_SAR[SAR] = sar_temp + (f'SAR {l_SAR_dates[SAR][1]:%B %d, %Y}',)
+                    lats, lons, (vh, vv) = LatLonImgVHVV(ee.Image(l_SAR.get(SAR)), area)
+                    precomputed_SAR[SAR] = []
+                    precomputed_SAR[SAR].append((lats, lons, vh) + (f'SAR (VH) {l_SAR_dates[SAR][1]:%B %d, %Y}',))
+                    precomputed_SAR[SAR].append((lats, lons, vv) + (f'SAR (VV) {l_SAR_dates[SAR][1]:%B %d, %Y}',))
                 arr.append(ndvi_temp + (f'NDVI {l_NDVI_dates[NDVI][1]:%B %d, %Y}',))
-                arr.append(precomputed_SAR[SAR])
+                arr.extend(precomputed_SAR[SAR])
             except ee.ee_exception.EEException:
                 pass
 

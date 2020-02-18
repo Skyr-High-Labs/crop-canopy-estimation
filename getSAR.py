@@ -8,7 +8,7 @@ import common
  
 # perform any calculation on the image collection here
 def getSAR(img):
-    sar = ee.Image(img.select(['VH'])).rename(["sar"])
+    sar = ee.Image(img.select('VH', 'VV'))
     return sar
  
 def arrayToSAR(array, startDate, EndDate):
