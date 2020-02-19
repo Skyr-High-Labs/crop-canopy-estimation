@@ -22,7 +22,13 @@ def LatLonImgVHVV(img, area):
 
 def makeNumDateTuple(orig_list):
     new_list = []
-    for i in range(orig_list.size().getInfo()):
+    list_size = 0
+    try:
+        list_size = orig_list.size().getInfo()
+    except ee.ee_exception.EEException:
+        return new_list
+
+    for i in range(list_size):
         try:
             date = ee.Date(ee.Image(orig_list.get(i)).get('system:time_start'))
             new_list.append((i, date))  # num, date pair .format('Y-M-d').getInfo()
@@ -56,6 +62,9 @@ def arrayToPairs(array, startDate, EndDate, take_first=True, delta=1):
         else:
             valid_dates = ee.Filter.Or(valid_dates, ee.Filter.date(i_NDVI[1].advance(-delta, 'day'),
                                                                    i_NDVI[1].advance(delta, 'day')))
+
+    if (not valid_dates):
+        raise ValueError("no valid dates for the image")
 
     collection_SAR = ee.ImageCollection('COPERNICUS/S1_GRD').filterBounds(area) \
         .filter(valid_dates) \
