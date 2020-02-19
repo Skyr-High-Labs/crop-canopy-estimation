@@ -31,16 +31,19 @@ def train_and_test(X, y):
 	regr = RandomForestRegressor()
 	regr.fit(X_train, y_train)
 
+	print("Train set size: {}".format(len(y_train)))
+	print("Test set size: {}".format(len(y_test)))
+
 	score = regr.score(X_test, y_test)
 	print("Regression score: R^2={}".format(score))
 
-	print("Example prediction: true={} predicted={}".format(regr.predict(X_test[:1])[0], y_test[0]))
+	#print("Example prediction: true={} predicted={}".format(regr.predict(X_test[:1])[0], y_test[0]))
 	
-	plt.scatter(regr.predict(X_test), y_test)
-	plt.plot([-1.,1.],[-1.,1.], ls="--", c="r")
-	plt.xlim(-1,1)
-	plt.ylim(-1,1)
-	plt.show()
+	#plt.scatter(regr.predict(X_test), y_test)
+	#plt.plot([-1.,1.],[-1.,1.], ls="--", c="r")
+	#plt.xlim(-1,1)
+	#plt.ylim(-1,1)
+	#plt.show()
 
 
 if __name__ == '__main__':

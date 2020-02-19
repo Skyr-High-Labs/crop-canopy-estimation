@@ -24,7 +24,7 @@ def parseKML(inputfile):
 
 if __name__ == "__main__":
   for array in parseKML("2017_polygons.kml"):
-    startDate, EndDate = "2017-01-01","2017-02-01"    
+    startDate, EndDate = "2017-05-01","2017-09-01"    
     data, _ = getPair.arrayToPairs(array, startDate, EndDate, False, 0.5)
     
     px_pairs = None
@@ -35,7 +35,7 @@ if __name__ == "__main__":
         tmp = tmp[np.all(tmp != 0, axis=1)]
         px_pairs = np.concatenate((px_pairs, tmp), axis = 0) if not px_pairs is None else tmp
     
-    print(px_pairs)
+    #print(px_pairs)
     # px_pairs is now pixel-pairs for a given field over a given time span
     ndvi = px_pairs[:,0]
     vv = px_pairs[:,1]
@@ -44,9 +44,10 @@ if __name__ == "__main__":
 
     X = np.stack([vv,vh,nrpd], axis=1)
     y = ndvi
-    print(X,y)
+    #print(X,y)
 
     model.train_and_test(X,y)
 
+    print()
 
-    break
+    #break
