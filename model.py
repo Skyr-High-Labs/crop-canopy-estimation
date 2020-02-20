@@ -26,8 +26,8 @@ def make_dataset():
 			[i/100 for i in range(100)]
 
 
-def train_and_test(X, y):
-	X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
+def train_and_test(X, y, test_split=0.33):
+	X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_split, random_state=42)
 	regr = RandomForestRegressor()
 	regr.fit(X_train, y_train)
 
@@ -37,6 +37,9 @@ def train_and_test(X, y):
 	score = regr.score(X_test, y_test)
 	print("Regression score: R^2={}".format(score))
 
+	print(regr.get_params(deep=True))
+    print(regr.feature_importances_)
+	#print()
 	#print("Example prediction: true={} predicted={}".format(regr.predict(X_test[:1])[0], y_test[0]))
 	
 	#plt.scatter(regr.predict(X_test), y_test)
