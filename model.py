@@ -38,7 +38,7 @@ def train_and_test(X, y, test_split=0.33):
 	print("Regression score: R^2={}".format(score))
 
 	print(regr.get_params(deep=True))
-    print(regr.feature_importances_)
+	print(regr.feature_importances_)
 	#print()
 	#print("Example prediction: true={} predicted={}".format(regr.predict(X_test[:1])[0], y_test[0]))
 	
