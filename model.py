@@ -30,7 +30,10 @@ def make_dataset():
             [i/100 for i in range(100)]
 
 
-def train_and_test(X, y, test_split=0.33, file_name=("model_" + str(datetime.today().timestamp())):
+def train_and_test(X, y, test_split=0.33, file_name=None):
+    if file_name is None:
+        file_name = "model_" + str(int(datetime.now().timestamp()))
+    
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_split, random_state=42)
     regr = None
     if os.path.isfile(file_name):
