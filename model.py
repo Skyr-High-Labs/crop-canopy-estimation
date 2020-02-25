@@ -3,6 +3,7 @@ from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 import random
 import matplotlib.pyplot as plt
+import numpy as np
 
 from datetime import datetime
 from joblib import dump, load
@@ -62,5 +63,6 @@ def train_and_test(X, y, test_split=0.33, file_name=None):
 
 
 if __name__ == '__main__':
-    X, y = make_dataset()
+    X = np.concatenate(np.load("2017_sar_per_field.npy", allow_pickle=True))
+    y = np.concatenate(np.load("2017_ndvi_per_field.npy", allow_pickle=True))
     train_and_test(X, y)

@@ -57,7 +57,7 @@ class MainClass(Resource):
                 }
             else:
                 raise FileNotFoundError
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             name_space.abort(400, e.__doc__, status="Model file could not be found", statusCode="400")
         except KeyError as e:
             name_space.abort(
