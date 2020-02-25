@@ -6,9 +6,9 @@ from sklearn.ensemble import RandomForestRegressor
 from joblib import load
 import reader
 import pixelPairs
-import getPair
+import getSAR
 import xlrd
-from datetime import datetime
+import datetime
 
 def mean(l): return sum(l)/len(l)
 
@@ -21,7 +21,7 @@ def read_ground_truth(field_no):
     for c in range(1,sheet.ncols,1):
         date_cell = sheet.cell_value(rowx=0, colx=c)
         date_tuple = xlrd.xldate_as_tuple(date_cell, workbook.datemode)
-        date = datetime(*date_tuple)
+        date = datetime.datetime(*date_tuple)
         date_str = date.strftime("%m/%d/%Y")
 
         ndvi = sheet.cell_value(rowx=field_no+1, colx=c)
@@ -34,22 +34,47 @@ def read_ground_truth(field_no):
 
     return res_date, res_ndvi
 
+def getSARPoints(array, startDate, EndDate):
+    try:
+        data, _ = getSAR.arrayToSAR(array, startDate, EndDate, False, 0.5)
+        px_pairs = None
+        for i in range(0, len(data), 2):
+            # NDVI, SAR
+            tmp = np.dstack((data[i][0], data[i + 1][0]))
+            tmp = tmp.reshape(-1, tmp.shape[-1])
+            tmp = tmp[np.all(tmp != 0, axis=1)]
+            px_pairs = np.concatenate((px_pairs, tmp), axis=0) if not px_pairs is None else tmp
+
+        vv = px_pairs[:, 0]
+        vh = px_pairs[:, 1]
+        nrpd = (vh - vv) / (vh + vv)
+
+        X = np.stack([vv, vh, nrpd], axis=1)
+        y = ndvi
+
+        return X, y
+    except ValueError:
+        return [], []
+
 
 def read_pixel_data(field_no):
-    startDate, endDate = "2017-05-01", "2017-09-30"
+    startDate, endDate = "2018-05-01", "2018-09-30"
     
-    arrays = reader.parseKML("2017_polygons.kml")
+    arrays = reader.parseKML("2018_polygons.kml")
     array = arrays[field_no]
-    data, l = getPair.arrayToPairs(array, startDate, endDate, False, 0.5)
+    data, l = getSAR.arrayToSAR(array, startDate, endDate)
     
     res_date, res_px = ([], [])
-    for i in range(0, len(data), 3):
+    start_day = datetime.date(2018,5,1)
+    day_delta = datetime.timedelta(days=1)
+    for i in range(0, len(data), 2):
         # NDVI, SAR
-        tmp = np.dstack((data[i][0], data[i + 1][0], data[i + 2][0]))
+        tmp = np.dstack((data[i][0], data[i + 1][0]))
         tmp = tmp.reshape(-1, tmp.shape[-1])
         tmp = tmp[np.all(tmp != 0, axis=1)]
         res_px.append(tmp)
-        res_date.append(data[i][1][5:])
+        res_date.append(f'{(start_day + (i/2)*day_delta):%B %d, %Y}')
+        #res_date.append(data[i][1][5:])
 
     return res_date, res_px
 
@@ -58,18 +83,20 @@ def read_pixel_data(field_no):
 
 def visualize(field_no, regr_model):
     date, px_pairs = read_pixel_data(field_no)
-    ndvi_mes = [mean(day[:,0]) for day in px_pairs]
+    ndvi_mes = np.array([mean(day[:,0]) for day in px_pairs])
     
-    ndvi_pred = []
+    ndvi_pred = np.array([])
     for day in px_pairs:
-        vv = day[:, 1]
-        vh = day[:, 2]
+        vv = day[:, 0]
+        vh = day[:, 1]
         nrpd = (vh - vv) / (vh + vv)
         X = np.stack([vv, vh, nrpd], axis=1)
         y = regr_model.predict(X)
-        ndvi_pred.append(mean(y))
+        ndvi_pred = np.append(ndvi_pred, mean(y))
     
     plt_date = dates.datestr2num(date)
+    ndvi_mes = 0.18 * np.exp(2.9 * ndvi_mes)
+    ndvi_pred = 0.18 * np.exp(2.9 * ndvi_pred)
     plt.plot_date(plt_date, ndvi_mes, xdate=True, fmt="g-")
     plt.plot_date(plt_date, ndvi_pred, xdate=True, fmt="r-")
     
