@@ -58,14 +58,14 @@ def getSARPoints(array, startDate, EndDate):
 
 
 def read_pixel_data(field_no):
-    startDate, endDate = "2018-05-01", "2018-09-30"
+    startDate, endDate = "2017-05-01", "2017-09-30"
     
-    arrays = reader.parseKML("2018_polygons.kml")
+    arrays = reader.parseKML("2017_polygons.kml")
     array = arrays[field_no]
     data, l = getSAR.arrayToSAR(array, startDate, endDate)
     
     res_date, res_px = ([], [])
-    start_day = datetime.date(2018,5,1)
+    start_day = datetime.date(2017,5,1)
     day_delta = datetime.timedelta(days=1)
     for i in range(0, len(data), 2):
         # NDVI, SAR
