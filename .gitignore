@@ -133,3 +133,6 @@ dmypy.json
 # extras
 resources/
 .vscode
+
+# random forest models
+model_*
