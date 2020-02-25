@@ -53,7 +53,7 @@ def train_and_test(X, y, test_split=0.33, file_name=None):
     print("Scoring...")
     score = regr.score(X_test, y_test)
     print("Regression score: R^2={}".format(score))
-    
+    return regr
     #plt.scatter(regr.predict(X_test), y_test)
     #plt.plot([-1.,1.],[-1.,1.], ls="--", c="r")
     #plt.xlim(-1,1)
