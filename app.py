@@ -13,16 +13,16 @@ app = Api(app = flask_app,
 name_space = app.namespace('cce', description='Estimate Crop Canopy Cover')
 
 model = app.model('CCE Model',
-                  {'polygon': fields.List(required=True,
-                                         description="Polygon for a field",
-                                         help="Array of coordinates (2-tuples)"),
+                  {'polygon': fields.List(cls_or_instance=fields.List(cls_or_instance=fields.Float), required=True,
+                                          description="Polygon for a field",
+                                          help="Array of coordinates (2-tuples)"),
                     'startDate': fields.DateTime(required=True,
                                             description="Start date",
                                             help="Start date"),
                   'endDate': fields.DateTime(required=True,
                                              description="End date",
                                              help="End date")})
-                                         
+                                        
 # TODO: sort out parameters
 @app.doc(responses={200: 'OK', 400: 'Error', 500: 'Mapping Key Error'},
          params={})
