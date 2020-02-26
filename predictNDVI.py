@@ -3,10 +3,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from joblib import load
 
+from getNDVI import arrayToNDVI
 from getSAR import arrayToSAR
 
 
-def getFieldData(array, startDate, endDate):
+def getFieldSAR(array, startDate, endDate):
     # data is a list where the even elements are a list of VVs for a field
     # and the odd ones are a list of VH. Each VV is followed by a VH of the
     # same field.
@@ -30,9 +31,26 @@ def getFieldData(array, startDate, endDate):
     return dates, Xs
 
 
+def getFieldNDVI(array, startDate, endDate):
+    data, dates = arrayToNDVI(array, startDate, endDate, returnDates=True, CLOUDY_PIXEL_PERCENTAGE=100)
+    ys = []
+    for i in range(0, len(data)):
+        px_pairs = data[i][0]
+
+        # put all data in a row
+        px_pairs = px_pairs.reshape(1, -1)
+
+        # Eliminate pairs where any element is zero
+        px_pairs = px_pairs[px_pairs != 0]
+
+        ys.append(np.average(px_pairs))
+
+    return dates, ys
+
+
 def predictNDVI(array, startDate, endDate, model="model_1582670452"):
     reg = load(model)
-    dates, SARs = getFieldData(array, startDate, endDate)
+    dates, SARs = getFieldSAR(array, startDate, endDate)
 
     # dates are unordered, so we sort them. We also predict the NDVI and compute
     # the average for each picture
@@ -43,10 +61,22 @@ def predictNDVI(array, startDate, endDate, model="model_1582670452"):
     return unzip[0], unzip[1]
 
 
-def plotPredictedNDVI(dates, NDVI):
+def realNDVI(array, startDate, endDate):
+    dates, NDVIs = getFieldNDVI(array, startDate, endDate)
+
+    # dates are unordered, so we sort them.
+    zip_dates_NDVIs = sorted(zip(dates, NDVIs))
+    unzip = list(zip(*zip_dates_NDVIs))
+
+    # return list of dates and list of predicted values
+    return unzip[0], unzip[1]
+
+
+def plotNDVI(dates_NDVI):
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%Y'))
     plt.gca().xaxis.set_major_locator(mdates.MonthLocator())
-    plt.plot(dates, NDVI)
+    for dates, NDVI in dates_NDVI:
+        plt.plot(dates, NDVI)
     plt.gcf().autofmt_xdate()
     plt.show()
 
@@ -55,4 +85,4 @@ if __name__ == "__main__":
     from reader import parseKML
 
     for array in parseKML("2019_polygons.kml"):
-        plotPredictedNDVI(*predictNDVI(array, "2019-05-01", "2019-09-30"))
+        plotNDVI([realNDVI(array, "2019-05-01", "2019-09-30"), predictNDVI(array, "2019-05-01", "2019-09-30")])
