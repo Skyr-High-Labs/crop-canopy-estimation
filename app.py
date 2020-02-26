@@ -3,6 +3,7 @@ from flask_restplus import Api, Resource, fields
 from joblib import dump, load
 import os
 import getSAR
+import predictNDVI
 
 flask_app = Flask(__name__)
 app = Api(app = flask_app,
@@ -10,9 +11,9 @@ app = Api(app = flask_app,
             title = "Crop Canopy Estimation",
             description = "Estimate crop canopy cover for a location")
 
-name_space = app.namespace('cce', description='Estimate Crop Canopy Cover')
+name_space = app.namespace('CCE Model', description='Estimate Crop Canopy Cover')
 
-model = app.model('CCE Model',
+model = app.model('Estimator Model',
                   {'polygon': fields.List(cls_or_instance=fields.List(cls_or_instance=fields.Float), required=True,
                                           description="Polygon for a field",
                                           help="Array of coordinates (2-tuples)"),
@@ -30,32 +31,28 @@ model = app.model('CCE Model',
 @name_space.route("/")
 class MainClass(Resource):
     # do nothing
-    def get(self):
-        return {
-            "status": "Did nothing, use POST Request"
-        }
+    # def get(self):
+    #     return {
+    #         "status": "Did nothing, use POST Request"
+    #     }
 
     @app.expect(model)
     def post(self):
         try:
             
             # get the data from the post request
-            print(request.json)
             polygon = request.json["polygon"]
             startDate = request.json["startDate"]
             endDate = request.json["endDate"]
-            print(request.json)
-            # load model
-            # TODO: how is file_name decided?
+            # TODO: file_name needs to be changed
             file_name = "model_1582706447"  # fill this in later
             if os.path.isfile(file_name):
-                print(f"Loading existing file {file_name}...")
-                regr = load(file_name)
-                X = getSAR.arrayToSAR(polygon, startDate, endDate)
-                y = regr.predict(X)
+                dates, predicted_values = predictNDVI.predictNDVI(polygon, startDate, endDate, model=file_name)
+                
                 return {
-                    "status": "Done",
-                    "ndvi": y
+                    "status": "OK",
+                    "dates": dates,
+                    "ndvi": predicted_values
                 }
             else:
                 raise FileNotFoundError
