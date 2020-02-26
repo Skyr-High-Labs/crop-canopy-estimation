@@ -13,7 +13,7 @@ earthengine authenticate
 # follow the instructions given for authentication of earthengine
 ```
 
-You are ready to run everything now, so do this:
+You are ready to run everything now, so do this to run (deploy) the model API locally:
 
 ```bash
 FLASK_APP=app.py flask run
