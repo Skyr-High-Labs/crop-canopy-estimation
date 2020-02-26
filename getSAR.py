@@ -1,42 +1,49 @@
+from datetime import datetime
+
 import ee
-import numpy as np
-import matplotlib.pyplot as plt
-import cv2
+
 import rasteriser
-import disp_multiple_images
-import common
 from getPair import LatLonImgVHVV
-    
+
+
 # perform any calculation on the image collection here
 def getSAR(img):
     sar = ee.Image(img.select('VH', 'VV'))
     return sar
- 
-def arrayToSAR(array, startDate, EndDate):
+
+
+def arrayToSAR(array, startDate, EndDate, returnDates=False):
     ee.Initialize()
-    
+
     # Define the roi
     area = ee.Geometry.Polygon(array)
-    
+
     # query
-    collection = ee.ImageCollection('COPERNICUS/S1_GRD').filterBounds(area)\
-                                        .filterDate(startDate, EndDate)\
-                                        .select(['VH', 'VV'])
-    
-    print("Number of images: ",collection.size().getInfo())
+    collection = ee.ImageCollection('COPERNICUS/S1_GRD').filterBounds(area) \
+        .filterDate(startDate, EndDate) \
+        .select(['VH', 'VV'])
+
+    print("Number of images: ", collection.size().getInfo())
 
     # map over the image collection
-    myCollection  = collection.map(getSAR)
+    myCollection = collection.map(getSAR)
 
     # get all images
-    l = myCollection.toList(min(40,collection.size().getInfo()))
+    l = myCollection.toList(min(40, collection.size().getInfo()))
 
     arr = []
+    dates = []
     for i in range(l.size().getInfo()):
         try:
-            lats, lons, (vh, vv) = LatLonImgVHVV(ee.Image(l.get(i)), area)
-            arr.append((lats, lons, vh)+(i,))
-            arr.append((lats, lons, vv)+(i,))
+            img = ee.Image(l.get(i))
+            lats, lons, (vh, vv) = LatLonImgVHVV(img, area)
+            arr.append((lats, lons, vh) + (i,))
+            arr.append((lats, lons, vv) + (i,))
+            if returnDates:
+                dates.append(datetime.utcfromtimestamp(
+                    ee.Date(img.get('system:time_start')).millis().getInfo() / 1000))
         except ee.ee_exception.EEException:
             pass
+    if returnDates:
+        return rasteriser.rasteriseImages(arr)[0], dates
     return rasteriser.rasteriseImages(arr)
