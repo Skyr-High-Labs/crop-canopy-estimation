@@ -48,10 +48,10 @@ class MainClass(Resource):
             file_name = "model_1582706447"  # fill this in later
             if os.path.isfile(file_name):
                 dates, predicted_values = predictNDVI.predictNDVI(polygon, startDate, endDate, model=file_name)
-                
+                dates = [date.isoformat() for date in dates]
                 return {
                     "status": "OK",
-                    "dates": dates,
+                    "dates" : dates,
                     "ndvi": predicted_values
                 }
             else:
