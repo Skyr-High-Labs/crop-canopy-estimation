@@ -24,7 +24,7 @@ model = app.model('CCE Model',
                                              help="End date")})
                                         
 # TODO: sort out parameters
-@app.doc(responses={200: 'OK', 400: 'Error', 500: 'Mapping Key Error'},
+@app.doc(responses={200: 'OK', 400: 'Error', 404:"FileNotFound", 500: 'Mapping Key Error'},
          params={})
 
 @name_space.route("/")
@@ -38,14 +38,16 @@ class MainClass(Resource):
     @app.expect(model)
     def post(self):
         try:
+            
             # get the data from the post request
-
+            print(request.json)
             polygon = request.json["polygon"]
             startDate = request.json["startDate"]
             endDate = request.json["endDate"]
+            print(request.json)
             # load model
             # TODO: how is file_name decided?
-            file_name = None # fill this in later
+            file_name = "model_1582706447"  # fill this in later
             if os.path.isfile(file_name):
                 print(f"Loading existing file {file_name}...")
                 regr = load(file_name)
@@ -58,7 +60,7 @@ class MainClass(Resource):
             else:
                 raise FileNotFoundError
         except FileNotFoundError as e:
-            name_space.abort(400, e.__doc__, status="Model file could not be found", statusCode="400")
+            name_space.abort(400, e.__doc__, status="Model file could not be found", statusCode="404")
         except KeyError as e:
             name_space.abort(
                 500, e.__doc__, status="Could not find key", statusCode="500")
