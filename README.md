@@ -3,9 +3,20 @@ Hotel group for Cambridge Part IB 2019-20 Group Project
 
 ## How to Run
 
-First, ensure you are in crop-canopy-estimation directory in Terminal/Command Prompt, then run the following to set up:
+First, ensure you are in crop-canopy-estimation directory in Terminal/Command Prompt.
+
+Check that you don't have any spaces in your filepath by running this
 
 ```bash
+pwd | grep " "
+```
+
+If you see the current working directory is printed then there is a space in your filepath. Change that to an underscore and try running the command again until there is nothing printed.
+
+After this is done, run the following to set up:
+
+```bash
+pip3 install virtualenv
 python3 -m virtualenv venv
 source venv/bin/activate
 pip3 install -r requirements.txt
