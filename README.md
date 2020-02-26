@@ -37,5 +37,5 @@ You'll see this, click the POST request
 ![](md_images/api2.png)
 Click `Try It Out`
 ![](md_images/api3.png)
-Fill in the coordinates for the polygon like so, and click execute. If everything works, you'll see the result below (scroll down)
+Fill in the coordinates for the polygon like so, and click execute. If everything works, you'll see the result below (scroll down, under `responses`)
 ![](md_images/api4.png)
