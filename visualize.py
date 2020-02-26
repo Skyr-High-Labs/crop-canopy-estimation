@@ -7,6 +7,7 @@ from joblib import load
 import reader
 import pixelPairs
 import getSAR
+import getNDVI
 import xlrd
 import datetime
 
@@ -62,28 +63,29 @@ def read_pixel_data(field_no):
     
     arrays = reader.parseKML("2017_polygons.kml")
     array = arrays[field_no]
-    data, l = getSAR.arrayToSAR(array, startDate, endDate)
+    data, dates = getSAR.arrayToSAR(array, startDate, endDate, returnDates=True)
+    #ndvi_data, ndvi_dates = getNDVI.arrayToNDVI(array, startDate, endDate, returnDates=True)
     
-    res_date, res_px = ([], [])
-    start_day = datetime.date(2017,5,1)
-    day_delta = datetime.timedelta(days=1)
+    res_date, res_px, res_ndvi, res_ndvi_dates = ([], [], [], [])
     for i in range(0, len(data), 2):
-        # NDVI, SAR
+        # SAR
         tmp = np.dstack((data[i][0], data[i + 1][0]))
         tmp = tmp.reshape(-1, tmp.shape[-1])
         tmp = tmp[np.all(tmp != 0, axis=1)]
         res_px.append(tmp)
-        res_date.append(f'{(start_day + (i/2)*day_delta):%B %d, %Y}')
-        #res_date.append(data[i][1][5:])
-
-    return res_date, res_px
-
+        res_date.append(f'{(dates[i//2]):%B %d, %Y}')
         
+    #for i in range(len(ndvi_data)):
+    #   tmp = np.array(ndvi_data[i][0])
+    #   tmp = tmp.flatten() 
+    #   tmp = tmp[tmp != 0]
+    #   res_ndvi.append(np.mean(tmp))
+    #   res_ndvi_dates.append(f'{(ndvi_dates[i//2]):%B %d, %Y}')
 
+    return res_date, res_px, res_ndvi_dates, res_ndvi
 
 def visualize(field_no, regr_model):
-    date, px_pairs = read_pixel_data(field_no)
-    ndvi_mes = np.array([mean(day[:,0]) for day in px_pairs])
+    date, px_pairs, ndvi_dates, ndvi_data = read_pixel_data(field_no)
     
     ndvi_pred = np.array([])
     for day in px_pairs:
@@ -95,10 +97,10 @@ def visualize(field_no, regr_model):
         ndvi_pred = np.append(ndvi_pred, mean(y))
     
     plt_date = dates.datestr2num(date)
-    ndvi_mes = 0.18 * np.exp(2.9 * ndvi_mes)
-    ndvi_pred = 0.18 * np.exp(2.9 * ndvi_pred)
-    plt.plot_date(plt_date, ndvi_mes, xdate=True, fmt="g-")
-    plt.plot_date(plt_date, ndvi_pred, xdate=True, fmt="r-")
+    #ndvi_mes = 0.18 * np.exp(2.9 * ndvi_mes)
+    #ndvi_pred = 0.18 * np.exp(2.9 * ndvi_pred)
+    #plt.plot_date(dates.datestr2num(ndvi_dates), ndvi_data, xdate=True, fmt="g-")
+    plt.plot_date(sorted(plt_date), [x for _,x in sorted(zip(plt_date,ndvi_pred))], xdate=True, fmt="r-")
     
 
     date, ndvi = read_ground_truth(field_no)

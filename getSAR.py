@@ -29,7 +29,7 @@ def arrayToSAR(array, startDate, EndDate, returnDates=False):
     myCollection = collection.map(getSAR)
 
     # get all images
-    l = myCollection.toList(min(40, collection.size().getInfo()))
+    l = myCollection.toList(collection.size().getInfo())
 
     arr = []
     dates = []
