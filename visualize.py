@@ -9,6 +9,8 @@ import pixelPairs
 import getSAR
 import xlrd
 import datetime
+from PIL import Image
+import getPair
 
 def mean(l): return sum(l)/len(l)
 
@@ -78,8 +80,6 @@ def read_pixel_data(field_no):
 
     return res_date, res_px
 
-        
-
 
 def visualize(field_no, regr_model):
     date, px_pairs = read_pixel_data(field_no)
@@ -113,11 +113,68 @@ def visualize(field_no, regr_model):
 
 
 
-if __name__ == '__main__':
-    model_file = "model_2018"
-    regr = load(model_file)
-    
-    for field_no in range(20):
-        visualize(field_no, regr)
+def fieldToImages(ndvi_mes, ndvi_pred):
+    img_mes = Image.fromarray(np.uint8(ndvi_mes * 255) , 'L')
+    img_pred = Image.fromarray(np.uint8(ndvi_pred * 255) , 'L')
 
+    return img_mes, img_pred
+
+
+def imagePredict(regr, vv, vh, mask):
+    nrpd = [(vh[i] - vv[i]) / (vh[i] + vv[i]) for i in range(len(vv))]
+    ndvi_pred = np.zeros_like(mask)
+    for i in range(len(mask)):
+      for j in range(len(mask[i])):
+        if mask[i][j] <= 0: continue
+        
+        vv_val = vv[i][j]
+        vh_val = vh[i][j]
+        nrpd_val = nrpd[i][j] if not np.isnan(nrpd[i][j]) else 0.0
+        #nrpd_val = nrpd[i][j]
+        
+        ndvi_pred[i][j] = regr.predict([(vv_val,vh_val,nrpd_val)])[0]
+    return ndvi_pred
+
+
+def generateFieldImages(field_no, regr_model, year="2017"):
+    try:
+        startDate, endDate = f"{year}-05-01", f"{year}-09-30"
+        arrays = reader.parseKML(f"{year}_polygons.kml")
+        array = arrays[field_no]
+        data, mask = getPair.arrayToPairs(array, startDate, endDate, False, 0.5)
+        ndvi_images = [data[i][0] for i in range(0, len(data), 3)]
+        vv_images = [data[i+1][0] for i in range(0, len(data), 3)]
+        vh_images = [data[i+2][0] for i in range(0, len(data), 3)]
+        
+        for i in range(len(ndvi_images)):
+            print(f"Processing image #{i+1}...")
+            y = imagePredict(regr, vv_images[i], vh_images[i], mask)
+    
+            ndvi_mes, ndvi_pred = ndvi_images[i], y
+            
+            img_mes, img_pred = fieldToImages(ndvi_mes, ndvi_pred)
+            #img_mes.show()
+            #img_pred.show()
+            img_mes.save(f"images/field_NDVI/{year}/measured/field{field_no+1}_{i+1}.jpg", "JPEG")
+            img_pred.save(f"images/field_NDVI/{year}/predicted/field{field_no+1}_{i+1}.jpg", "JPEG")
+    except ValueError:
+        return
+
+
+if __name__ == '__main__':
+    #model_file = "model_2017"
+    model_file = "model_1582706447.dms"
+    regr = load(model_file)
+    #regr = RandomForestRegressor()
+    #regr.fit([(0.0, 0.0, 0.0)], [0.0])
+    
+    ## Visualize NDVI mean values
+    #for field_no in range(20):
+    #    visualize(field_no, regr)
+
+    ## Generate NDVI image comparions
+
+    for field_no in range(20):
+        print(f"Processing field #{field_no+1}...")
+        generateFieldImages(field_no, regr)
 
