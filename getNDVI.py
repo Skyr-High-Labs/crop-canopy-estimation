@@ -8,7 +8,7 @@ import rasteriser
 
 # perform any calculation on the image collection here
 def getNDVI(img):
-    ndvi = ee.Image(img.normalizedDifference(['B8', 'B4']).rename(["ndvi"]))
+    ndvi = ee.Image(img.normalizedDifference(['B8', 'B4'])).rename(["ndvi"])
     # cloudBitMask = ee.Number(2).pow(10).int();
     # cirrusBitMask = ee.Number(2).pow(11).int();
     # Cloud filter
