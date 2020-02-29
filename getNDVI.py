@@ -8,7 +8,11 @@ import rasteriser
 
 # perform any calculation on the image collection here
 def getNDVI(img):
-    ndvi = ee.Image(img.normalizedDifference(['B8', 'B4'])).rename(["ndvi"])
+    ndvi = ee.Image(img.normalizedDifference(['B8', 'B4']).rename(["ndvi"]))
+    # cloudBitMask = ee.Number(2).pow(10).int();
+    # cirrusBitMask = ee.Number(2).pow(11).int();
+    # Cloud filter
+    ndvi = ndvi.where(img.select('QA60').neq(0), 0)
     return ndvi
 
 
@@ -22,7 +26,8 @@ def arrayToNDVI(array, startDate, EndDate, returnDates=False, CLOUDY_PIXEL_PERCE
     collection = ee.ImageCollection("COPERNICUS/S2").filterBounds(area) \
         .filterDate(startDate, EndDate) \
         .filterMetadata("CLOUDY_PIXEL_PERCENTAGE", "less_than", CLOUDY_PIXEL_PERCENTAGE) \
-        .select(['B8', 'B4'])
+        .select(['B8', 'B4', 'QA60']) \
+        .sort('system:time_start')
 
     print("Number of images: ", collection.size().getInfo())
 

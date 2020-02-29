@@ -15,4 +15,8 @@ if __name__ == "__main__":
     import getNDVI
 
     for array in parseKML("2017_polygons.kml"):
-        common.plot(getNDVI.arrayToNDVI(array, "2017-01-01", "2018-01-01")[0])
+        ndvi = getNDVI.arrayToNDVI(array, "2017-05-01", "2017-09-30", returnDates=True, CLOUDY_PIXEL_PERCENTAGE=100)
+        for i in ndvi[1]:
+            print(i, end=' ')
+        print()
+        common.plot(ndvi[0])
