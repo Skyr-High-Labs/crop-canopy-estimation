@@ -3,9 +3,9 @@ import numpy as np
 import getPair
 
 
-def pixelPairs(array, startDate, EndDate):
+def pixelPairs(array, startDate, EndDate, CLOUDY_PIXEL_PERCENTAGE=10):
     try:
-        data, _ = getPair.arrayToPairs(array, startDate, EndDate, False, 0.5)
+        data, _ = getPair.arrayToPairs(array, startDate, EndDate, delta=0.5, CLOUDY_PIXEL_PERCENTAGE=CLOUDY_PIXEL_PERCENTAGE)
         px_pairs = None
         for i in range(0, len(data), 3):
             # NDVI, SAR

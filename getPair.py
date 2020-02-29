@@ -39,16 +39,15 @@ def makeNumDateTuple(orig_list):
 
 # delta (>=0) is the day-distance to allow between pairs
 # 0 means that the timestamps need to match exactly
-# take_first; if True, then take the first found pair, else, take the last found pair for a given NDVI image
-def arrayToPairs(array, startDate, EndDate, take_first=True, delta=1):
+def arrayToPairs(array, startDate, EndDate, delta=1, CLOUDY_PIXEL_PERCENTAGE=10):
     ee.Initialize()
     area = ee.Geometry.Polygon(array)
 
     # query
     collection_NDVI = ee.ImageCollection("COPERNICUS/S2").filterBounds(area) \
         .filterDate(startDate, EndDate) \
-        .filterMetadata("CLOUDY_PIXEL_PERCENTAGE", "less_than", 10) \
-        .select(['B8', 'B4']) \
+        .filterMetadata("CLOUDY_PIXEL_PERCENTAGE", "less_than", CLOUDY_PIXEL_PERCENTAGE) \
+        .select(['B8', 'B4', 'QA60']) \
         .sort('date')
 
     l_NDVI = collection_NDVI.toList(collection_NDVI.size().getInfo())
