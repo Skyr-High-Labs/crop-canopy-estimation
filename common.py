@@ -1,11 +1,10 @@
 import ee
-import numpy as np
 
 import disp_multiple_images
 
 
 # export the latitude, longitude and data
-def LatLonImg(img, area):
+def fastLatLonImg(img, area):
     img = img.rename("result")
     img = img.addBands(ee.Image.pixelLonLat())
 
@@ -13,11 +12,7 @@ def LatLonImg(img, area):
                            geometry=area, \
                            maxPixels=1e13, \
                            scale=10)
-
-    data = np.array((ee.Array(img.get("result")).getInfo()))
-    lats = np.array((ee.Array(img.get("latitude")).getInfo()))
-    lons = np.array((ee.Array(img.get("longitude")).getInfo()))
-    return lats, lons, data
+    return ee.List([img.get("latitude"), img.get("longitude"), img.get("result")])
 
 
 def plot(images):

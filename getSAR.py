@@ -23,27 +23,27 @@ def arrayToSAR(array, startDate, EndDate, returnDates=False):
         .filterDate(startDate, EndDate) \
         .select(['VH', 'VV'])
 
-    print("Number of images: ", collection.size().getInfo())
+    size = collection.size().getInfo()
+    print("Number of images: ", size)
 
     # map over the image collection
     myCollection = collection.map(getSAR)
 
     # get all images
-    l = myCollection.toList(collection.size().getInfo())
-
+    l = myCollection.toList(size)
     arr = []
-    dates = []
-    for i in range(l.size().getInfo()):
-        try:
-            img = ee.Image(l.get(i))
-            lats, lons, (vh, vv) = LatLonImgVHVV(img, area)
-            arr.append((lats, lons, vh) + (i,))
-            arr.append((lats, lons, vv) + (i,))
-            if returnDates:
-                dates.append(datetime.utcfromtimestamp(
-                    ee.Date(img.get('system:time_start')).millis().getInfo() / 1000))
-        except ee.ee_exception.EEException:
-            pass
+    LatLonImgsSAR = ee.List([LatLonImgVHVV(ee.Image(l.get(i)), area) for i in range(size)]).getInfo()
+    for i in range(size):
+        lats = LatLonImgsSAR[i][0]
+        lons = LatLonImgsSAR[i][1]
+        vh = LatLonImgsSAR[i][2]
+        vv = LatLonImgsSAR[i][3]
+        arr.append((lats, lons, vh) + (i,))
+        arr.append((lats, lons, vv) + (i,))
     if returnDates:
+        l1 = collection.toList(size)
+        old_dates = ee.List(
+            [ee.Date(ee.Image(l1.get(i)).get('system:time_start')).millis() for i in range(size)]).getInfo()
+        dates = [datetime.utcfromtimestamp(date / 1000) for date in old_dates]
         return rasteriser.rasteriseImages(arr)[0], dates
     return rasteriser.rasteriseImages(arr)

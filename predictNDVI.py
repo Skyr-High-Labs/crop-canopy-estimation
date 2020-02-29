@@ -31,9 +31,11 @@ def getFieldSAR(array, startDate, endDate):
     return dates, Xs
 
 
-def getFieldNDVI(array, startDate, endDate):
-    data, dates = arrayToNDVI(array, startDate, endDate, returnDates=True, CLOUDY_PIXEL_PERCENTAGE=100)
+def getFieldNDVI(array, startDate, endDate, CLOUDY_PIXEL_PERCENTAGE=10):
+    data, dates = arrayToNDVI(array, startDate, endDate, returnDates=True,
+                              CLOUDY_PIXEL_PERCENTAGE=CLOUDY_PIXEL_PERCENTAGE)
     ys = []
+    new_dates = []
     for i in range(0, len(data)):
         px_pairs = data[i][0]
 
@@ -43,9 +45,11 @@ def getFieldNDVI(array, startDate, endDate):
         # Eliminate pairs where any element is zero
         px_pairs = px_pairs[px_pairs != 0]
 
-        ys.append(np.average(px_pairs))
+        if px_pairs.size != 0:
+            ys.append(np.average(px_pairs))
+            new_dates.append(dates[i])
 
-    return dates, ys
+    return new_dates, ys
 
 
 def predictNDVI(array, startDate, endDate, model="model_1582670452"):
@@ -61,8 +65,8 @@ def predictNDVI(array, startDate, endDate, model="model_1582670452"):
     return unzip[0], unzip[1]
 
 
-def realNDVI(array, startDate, endDate):
-    dates, NDVIs = getFieldNDVI(array, startDate, endDate)
+def realNDVI(array, startDate, endDate, CLOUDY_PIXEL_PERCENTAGE=10):
+    dates, NDVIs = getFieldNDVI(array, startDate, endDate, CLOUDY_PIXEL_PERCENTAGE=CLOUDY_PIXEL_PERCENTAGE)
 
     # dates are unordered, so we sort them.
     zip_dates_NDVIs = sorted(zip(dates, NDVIs))
@@ -85,4 +89,5 @@ if __name__ == "__main__":
     from reader import parseKML
 
     for array in parseKML("2019_polygons.kml"):
-        plotNDVI([realNDVI(array, "2019-05-01", "2019-09-30"), predictNDVI(array, "2019-05-01", "2019-09-30")])
+        plotNDVI([realNDVI(array, "2019-05-01", "2019-09-30", CLOUDY_PIXEL_PERCENTAGE=10),
+                  predictNDVI(array, "2019-05-01", "2019-09-30")])

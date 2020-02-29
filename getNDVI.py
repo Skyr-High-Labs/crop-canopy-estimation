@@ -29,25 +29,22 @@ def arrayToNDVI(array, startDate, EndDate, returnDates=False, CLOUDY_PIXEL_PERCE
         .select(['B8', 'B4', 'QA60']) \
         .sort('system:time_start')
 
-    print("Number of images: ", collection.size().getInfo())
+    size = collection.size().getInfo()
+    print("Number of images: ", size)
 
     # map over the image collection
     myCollection = collection.map(getNDVI)
 
     # get all images
-    l = myCollection.toList(collection.size().getInfo())
+    l = myCollection.toList(size)
     arr = []
+    LatLonImgs = ee.List([common.fastLatLonImg(ee.Image(l.get(i)), area) for i in range(size)]).getInfo()
+    for i in range(size):
+        arr.append((LatLonImgs[i][0], LatLonImgs[i][1], LatLonImgs[i][2], i))
     if returnDates:
-        dates = []
-        l1 = collection.toList(collection.size().getInfo())
-    for i in range(l.size().getInfo()):
-        try:
-            arr.append(common.LatLonImg(ee.Image(l.get(i)), area) + (i,))
-            if returnDates:
-                dates.append(datetime.utcfromtimestamp(
-                    ee.Date(ee.Image(l1.get(i)).get('system:time_start')).millis().getInfo() / 1000))
-        except ee.ee_exception.EEException:
-            pass
-    if returnDates:
+        l1 = collection.toList(size)
+        old_dates = ee.List(
+            [ee.Date(ee.Image(l1.get(i)).get('system:time_start')).millis() for i in range(size)]).getInfo()
+        dates = [datetime.utcfromtimestamp(date / 1000) for date in old_dates]
         return rasteriser.rasteriseImages(arr)[0], dates
     return rasteriser.rasteriseImages(arr)
