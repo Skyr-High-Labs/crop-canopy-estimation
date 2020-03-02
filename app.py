@@ -30,11 +30,7 @@ model = app.model('Estimator Model',
 
 @name_space.route("/")
 class MainClass(Resource):
-    # do nothing
-    # def get(self):
-    #     return {
-    #         "status": "Did nothing, use POST Request"
-    #     }
+
 
     @app.expect(model)
     def post(self):
@@ -45,7 +41,7 @@ class MainClass(Resource):
             startDate = request.json["startDate"]
             endDate = request.json["endDate"]
             # TODO: file_name needs to be changed
-            file_name = "model_1582706447"  # fill this in later
+            file_name = "model_mixed_avg"  # fill this in later
             if os.path.isfile(file_name):
                 dates, predicted_values = predictNDVI.predictNDVI(polygon, startDate, endDate, model=file_name)
                 dates = [date.isoformat() for date in dates]
