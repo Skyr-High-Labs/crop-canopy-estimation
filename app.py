@@ -48,7 +48,7 @@ class MainClass(Resource):
                 return {
                     "status": "OK",
                     "dates" : dates,
-                    "ndvi": predicted_values
+                    "ndvi": [x for x in map(lambda x : x.tolist()[0], predicted_values)]
                 }
             else:
                 raise FileNotFoundError
@@ -58,5 +58,6 @@ class MainClass(Resource):
             name_space.abort(
                 500, e.__doc__, status="Could not find key", statusCode="500")
         except Exception as e:
-            name_space.abort(400, e.__doc__, status ="Unspecified Error", statusCode = "400")
+            raise e
+            #name_space.abort(400, e.__doc__, status ="Unspecified Error", statusCode = "400")
         
