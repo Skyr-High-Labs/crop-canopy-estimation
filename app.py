@@ -2,7 +2,6 @@ from flask import Flask, request
 from flask_restplus import Api, Resource, fields
 from joblib import dump, load
 import os
-import getSAR
 import predictNDVI
 
 flask_app = Flask(__name__)

@@ -31,26 +31,26 @@ def make_dataset():
             [i/100 for i in range(100)]
 
 
-def train_and_test(X, y, test_split=0.33, file_name=None):
+def train_and_test(X, y, test_split=0.1, file_name=None):
     if file_name is None:
         file_name = "model_" + str(int(datetime.now().timestamp()))
     
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_split, random_state=42)
     regr = None
-    if os.path.isfile(file_name):
-        print(f"Loading existing file {file_name}...")
-        regr = load(file_name)
-    else:
-        print("Training new model...")
-        print("Train set size: {}".format(len(y_train)))
-        print("Test set size: {}".format(len(y_test)))
-             
-        regr = RandomForestRegressor()
-        regr.fit(X_train, y_train)
-        
-        print(f"Saving to {file_name}...")
-        dump(regr, file_name)
-        print("Done!")
+    #if os.path.isfile(file_name):
+    #    print(f"Loading existing file {file_name}...")
+    #    regr = load(file_name)
+    #else:
+    print("Training new model...")
+    print("Train set size: {}".format(len(y_train)))
+    print("Test set size: {}".format(len(y_test)))
+            
+    regr = RandomForestRegressor(n_jobs=-1, max_depth=32)
+    regr.fit(X_train, y_train)
+    
+    print(f"Saving to {file_name}...")
+    dump(regr, file_name)
+    print("Done!")
     print("Scoring...")
     score = regr.score(X_test, y_test)
     print("Regression score: R^2={}".format(score))

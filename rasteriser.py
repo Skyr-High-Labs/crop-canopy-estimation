@@ -79,5 +79,7 @@ def rasteriseImages(data):
         # remove check as any pixels
         #if not np.any(roiMask * np.logical_not(rasterised[i][1])):
             # image covers roi
-        images.append((roiMask * rasterised[i][0], data[i][3]))
+        inpainted = cv2.inpaint(np.float32(roiMask * rasterised[i][0]),np.uint8(roiMask==0),3,cv2.INPAINT_NS)
+        inpainted = cv2.GaussianBlur(inpainted,(23,23),0)
+        images.append((roiMask * inpainted, data[i][3]))
     return images, roiMask
