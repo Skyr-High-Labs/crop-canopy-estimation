@@ -12,62 +12,53 @@ def getFieldSAR(array, startDate, endDate):
     # and the odd ones are a list of VH. Each VV is followed by a VH of the
     # same field.
     data, dates = arrayToSAR(array, startDate, endDate, returnDates=True)
-    Xs = []
-    vvs = []
-    vhs = []
+    px_pairs = None
     for i in range(0, len(data), 2):
-        # Make pairs of VV and VH for each picture
-        px_pairs = np.dstack((data[i][0], data[i + 1][0]))
+        # NDVI, SAR
+        a1 = data[i][0][data[i][0] != 0]
+        a2 = data[i+1][0][data[i+1][0] != 0]
 
-        # Reshape array so it has two columns and any number of rows
-        px_pairs = px_pairs.reshape(-1, px_pairs.shape[-1])
+        tmp = [[np.mean(a1), np.mean(a2)]]
+        px_pairs = np.concatenate((px_pairs, tmp), axis=0) if not px_pairs is None else np.array(tmp)
 
-        # Eliminate pairs where any element is zero
-        px_pairs = px_pairs[np.all(px_pairs != 0, axis=1)]
-
-        vvs.append(px_pairs[:, 0])
-        vhs.append(px_pairs[:, 1])
-
-    mean = lambda l : sum(l)/len(l)
-   
-    vh = mean(vhs)
-    vv = mean(vvs)
-    
+    vv = px_pairs[:, 0]
+    vh = px_pairs[:, 1]
     nrpd = (vh - vv) / (vh + vv)
-    for i in range(0, len(data), 2):
-        Xs.append(np.stack([vv, vh, nrpd], axis=1))
 
-    return dates, Xs
+    X = np.stack([vv, vh, nrpd], axis=1)
+
+    return dates, X
 
 
 def getFieldNDVI(array, startDate, endDate, CLOUDY_PIXEL_PERCENTAGE=10):
     data, dates = arrayToNDVI(array, startDate, endDate, returnDates=True,
                               CLOUDY_PIXEL_PERCENTAGE=CLOUDY_PIXEL_PERCENTAGE)
-    ys = []
+    px_pairs = None
     new_dates = []
     for i in range(0, len(data)):
-        px_pairs = data[i][0]
+        # NDVI, SAR
+        a1 = data[i][0][data[i][0] != 0]
+            
+        if len(a1) == 0:
+            continue
+            
+        new_dates.append(dates[i])
+        tmp = [[np.mean(a1)]]
+        px_pairs = np.concatenate((px_pairs, tmp), axis=0) if not px_pairs is None else np.array(tmp)
 
-        # put all data in a row
-        px_pairs = px_pairs.reshape(1, -1)
+    ndvi = px_pairs[:, 0]
+    y = ndvi
 
-        # Eliminate pairs where any element is zero
-        px_pairs = px_pairs[px_pairs != 0]
-
-        if px_pairs.size != 0:
-            ys.append(np.average(px_pairs))
-            new_dates.append(dates[i])
-
-    return new_dates, ys
+    return new_dates, y
 
 
-def predictNDVI(array, startDate, endDate, model="model_1582670452"):
+def predictNDVI(array, startDate, endDate, model="model_mixed_avg"):
     reg = load(model)
     dates, SARs = getFieldSAR(array, startDate, endDate)
 
     # dates are unordered, so we sort them. We also predict the NDVI and compute
     # the average for each picture
-    zip_dates_SARs = sorted(zip(dates, [np.average(reg.predict(SAR)) for SAR in SARs]))
+    zip_dates_SARs = sorted(zip(dates, [reg.predict([SAR]) for SAR in SARs]))
     unzip = list(zip(*zip_dates_SARs))
 
     # return list of dates and list of predicted values
@@ -98,5 +89,5 @@ if __name__ == "__main__":
     from reader import parseKML
 
     for array in parseKML("2019_polygons.kml"):
-        plotNDVI([realNDVI(array, "2019-05-01", "2019-09-30", CLOUDY_PIXEL_PERCENTAGE=10),
-                  predictNDVI(array, "2019-05-01", "2019-09-30")])
+        plotNDVI([realNDVI(array, "2019-05-01", "2019-09-15", CLOUDY_PIXEL_PERCENTAGE=10),
+                  predictNDVI(array, "2019-05-01", "2019-09-15")])
