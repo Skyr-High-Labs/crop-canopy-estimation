@@ -13,6 +13,8 @@ def getFieldSAR(array, startDate, endDate):
     # same field.
     data, dates = arrayToSAR(array, startDate, endDate, returnDates=True)
     Xs = []
+    vvs = []
+    vhs = []
     for i in range(0, len(data), 2):
         # Make pairs of VV and VH for each picture
         px_pairs = np.dstack((data[i][0], data[i + 1][0]))
@@ -23,9 +25,16 @@ def getFieldSAR(array, startDate, endDate):
         # Eliminate pairs where any element is zero
         px_pairs = px_pairs[np.all(px_pairs != 0, axis=1)]
 
-        vv = px_pairs[:, 0]
-        vh = px_pairs[:, 1]
-        nrpd = (vh - vv) / (vh + vv)
+        vvs.append(px_pairs[:, 0])
+        vhs.append(px_pairs[:, 1])
+
+    mean = lambda l : sum(l)/len(l)
+   
+    vh = mean(vhs)
+    vv = mean(vvs)
+    
+    nrpd = (vh - vv) / (vh + vv)
+    for i in range(0, len(data), 2):
         Xs.append(np.stack([vv, vh, nrpd], axis=1))
 
     return dates, Xs
