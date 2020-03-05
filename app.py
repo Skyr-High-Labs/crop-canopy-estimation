@@ -24,7 +24,7 @@ model = app.model('Estimator Model',
                                              description="End date",
                                              help="End date")})
                                         
-# TODO: sort out parameters
+
 @app.doc(responses={200: 'OK', 400: 'Error', 404:"FileNotFound", 500: 'Mapping Key Error'},
          params={})
 
@@ -40,8 +40,7 @@ class MainClass(Resource):
             polygon = request.json["polygon"]
             startDate = request.json["startDate"]
             endDate = request.json["endDate"]
-            # TODO: file_name needs to be changed
-            file_name = "model_mixed_avg"  # fill this in later
+            file_name = "model_mixed_avg"
             if os.path.isfile(file_name):
                 dates, predicted_values = predictNDVI.predictNDVI(polygon, startDate, endDate, model=file_name)
                 dates = [date.isoformat() for date in dates]
